@@ -12,7 +12,14 @@ and open the template in the editor.
     </head>
     <body>
         <div ng-controller="ChatController as vm">
-            Chat app
+            <form ng-submit="vm.sub()" method="POST">
+                <input type="text" ng-model="vm.message"/>
+                <input type="submit" value="send"/>
+            </form>
+            
+            <div ng-repeat="message in vm.messages">
+                Message: {{message.message}}
+            </div>
         </div>
         
      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
