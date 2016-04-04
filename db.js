@@ -1,3 +1,5 @@
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('email');
 var Sequelize = require("sequelize");
 var env = process.env.NODE_ENV || 'development';
 var sequelize;
@@ -8,9 +10,9 @@ if (env === 'production') {
        dialect: 'postgres'
     });
 } else {
-    sequelize = new Sequelize('chat', 'root', 'sifra15', {
+    sequelize = new Sequelize('database', 'username', 'password', {
         host: "localhost",
-        dialect: "mysql",
+        dialect: "sqlite",
         logging: function () {
         },
         pool: {
@@ -18,12 +20,7 @@ if (env === 'production') {
             min: 0,
             idle: 10000
         },
-        dialectOptions: {
-            socketPath: "/var/run/mysql/mysql.sock"
-        },
-        define: {
-            paranoid: true
-        }
+        storage: 'chat.sqlite'
     });
 }
 
