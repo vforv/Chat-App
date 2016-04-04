@@ -10,7 +10,27 @@ if (env === 'production') {
        dialect: 'postgres'
     });
 } else {
-    sequelize = new Sequelize('database', 'username', 'password', {
+    try{
+        sequelize = new Sequelize('chat', 'root', 'sifra15', {
+        host: "localhost",
+        dialect: "mysql",
+        logging: function () {
+        },
+        pool: {
+            max: 5,
+            min: 0,
+            idle: 10000
+        },
+        dialectOptions: {
+            socketPath: "/var/run/mysql/mysql.sock"
+        },
+        define: {
+            paranoid: true
+        }
+        });
+    }catch() {
+
+        sequelize = new Sequelize('database', 'username', 'password', {
         host: "localhost",
         dialect: "sqlite",
         logging: function () {
@@ -22,6 +42,8 @@ if (env === 'production') {
         },
         storage: 'chat.sqlite'
     });
+    }
+    
 }
 
 var db = {};
