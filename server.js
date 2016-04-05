@@ -4,6 +4,7 @@ var http = require("http").Server(app);
 var io = require('socket.io')(http);
 var cors = require("cors");
 var db = require("./db.js");
+var middleware = require('./middleware.js')(db);
 var PORT = process.env.PORT || 3000;
 var bodyParser = require("body-parser");
 var _ = require("underscore");
@@ -30,24 +31,51 @@ app.post("/create/user", function (req, res) {
     });
 });
 
+var userInstance;
 
-app.post("/login/user", function(req,res) {
+app.post("/login/user" ,function(req,res) {
     var cred = _.pick(req.body, "email", "password");
 
-    db.user.findOne({
-        where: {
-            email: cred.email
-        }
-    }).then(function(user){
-        if(user && bcrypt.compareSync(cred.password,user.password_hash)){
-            res.send(user.toPublicJSON());
-        } else {
-            res.status(400).send();
-        }
+    db.user.loginAuth(cred.email, cred.password)
+    .then(function (user) {
+       userInstance = user;
+       return db.token.create({
+        token: user.generateToken("auth")
+       });
+
+    })
+    .then(function(token) {
+        res.send({
+            token: token.token,
+            user: userInstance
+        });
+    })
+    .catch(function() {
+        res.status(401).send();
+    });
+
+
+});
+
+app.post("/logout/user" ,middleware.requireAuth,function(req,res) {
+    db.token.destroy({
+    where: {
+        hash: req.hashToken
+    }
+    })
+    .then(function(){
+        res.status(200).send();
     }, function() {
         res.status(400).send();
-    })
+    });
+
 });
+
+
+app.post("/test" ,middleware.requireAuth,function(req,res) {
+    res.send("HELLOW");
+});
+
 
 io.on('connection', function (socket) {
 
@@ -102,7 +130,7 @@ io.on('connection', function (socket) {
 });
 
 
-db.sequelize.sync({force:true})
+db.sequelize.sync({force:false})
         .then(function () {
             http.listen(PORT, function () {
                 console.log("Server Sterted!");
