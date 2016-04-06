@@ -1,33 +1,44 @@
 angular.module("chat")
         .controller("ChatController", ChatData);
 
-function ChatData($scope)
+function ChatData($scope,$http, $routeParams)
 {
+    
+
     var vm = this;
     vm.sub = sub;
-    vm.messages = [
-    ];
+    vm.messages =[];
+    
 
     var socket = io.connect();
+
+    var i = 0;
+
     
-    socket.emit("pm", {
-        message: "hey",
-        id: 1
+     $http.get("/user/get/?Auth=" + $routeParams.token)
+      .then(function(user){
+       socket.emit("login",{
+          user: user.data
+       }) 
+    },function(){
+
     });
+    
+   
+   
 
     socket.on("message", function (message) {
-        console.log(message);
-        vm.messages.push(message);
+
+         vm.messages.push(message);
          $scope.$apply(vm.messages);
 
     });
-
-
+     
     function sub()
     {
-        console.log(vm.message);
-        socket.emit("message", {
-            message: vm.message
+        socket.emit("pm", {
+            message: vm.message,
+            id: vm.id
         });
     }
 }

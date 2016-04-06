@@ -1,0 +1,13 @@
+
+            <form ng-submit="vm.sub()" method="POST">
+            	<label>Message</label>
+                <input type="text" ng-model="vm.message"/>
+                <label>userId</label>
+                <input type="text" ng-model="vm.id"/>
+                <input type="submit" value="send"/>
+            </form>
+            
+            <div ng-repeat="message in vm.messages">
+                Message: {{message.message}}
+            </div>
+        

@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 
 
 clients = {};
+users = {};
 var id = 0;
 
 app.post("/create/user", function (req, res) {
@@ -72,30 +73,38 @@ app.post("/logout/user" ,middleware.requireAuth,function(req,res) {
 });
 
 
-app.post("/test" ,middleware.requireAuth,function(req,res) {
-    res.send("HELLOW");
+
+app.get("/user/get" ,middleware.requireAuth,function(req,res) {
+    var user = req.user;
+    res.send(user.toPublicJSON());
 });
 
+ io.on('connection', function (socket) {
 
-io.on('connection', function (socket) {
-
-    //SAVE USER ID
-    db.user.findOne({
-        where: {
-            id: id++
-        }
-    }).then(function (user) {
-        clients[user.id] = socket;
-
-        socket.emit("message", {
-            message: user.id
+     socket.on("login", function (data) {
+        // SAVE USER ID
+        db.user.findOne({
+            where: {
+                id: data.user.id
+            }
+        }).then(function (user) {
+            clients[user.id] = socket;
+            users[user.id] = user;
+            clients[user.id].join(user.admin_id);
+            
+            socket.emit("message", {
+                message: user.id
+            });
         });
     });
 
+   
+    
+    
     //PRIVATE MESSAGE
     socket.on("pm", function (data) {
         clients[data.id].emit("message", {
-            message: data.message
+            message: users[data.id].email + " " +data.message
         });
         
         //SAVE MESSAGE TO THE DATABASE
@@ -104,18 +113,18 @@ io.on('connection', function (socket) {
 
 
     //SEND MESSAGE ALL IN PROJECT
-    socket.on("group-message", function (message, userId) {
-        db.user.findOne({
-            where: {
-                id: userId
-            }
-        }).then(function (user) {
-            socket.join(user.admin_id);
-            io.sockets.in(user.admin_id).emit('message', {
-                message: user.name + " JOINED TO ROOM"
-            });
-        });
-    });
+    // socket.on("group-message", function (message, userId) {
+    //     db.user.findOne({
+    //         where: {
+    //             id: userId
+    //         }
+    //     }).then(function (user) {
+    //         socket.join(user.admin_id);
+    //         io.sockets.in(user.admin_id).emit('message', {
+    //             message: user.name + " JOINED TO ROOM"
+    //         });
+    //     });
+    // });
 
 
 
