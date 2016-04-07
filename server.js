@@ -16,15 +16,18 @@ app.use(bodyParser.json());
 
 
 clients = {};
-users = {};
+adminUsers = [];
+adminIdUsers = {};
+
 var id = 0;
 
 app.post("/create/user", function (req, res) {
-    var cred = _.pick(req.body,"email", "password");
+    var cred = _.pick(req.body,"email", "password", "admin_id");
 
     db.user.create({
         email: cred.email,
-        password: cred.password
+        password: cred.password,
+        admin_id: cred.admin_id
     }).then(function (data) {
         res.send(data.toPublicJSON());
     }, function (data) {
@@ -87,14 +90,40 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
             where: {
                 id: data.user.id
             }
-        }).then(function (user) {
+         }).then(function (user) {
             clients[user.id] = socket;
-            users[user.id] = user;
+            clients[user.id].user = user.toPublicJSON();
             clients[user.id].join(user.admin_id);
+
             
-            socket.emit("message", {
-                message: user.id
-            });
+            var cli = io.sockets.adapter.rooms[user.admin_id].sockets;  
+
+
+            function isLogged(idObj) {
+                return (_.findWhere(adminUsers, idObj) == null) ? false : true;
+            } 
+
+            //to get the number of clients
+            var numClients = (typeof cli !== 'undefined') ? Object.keys(clients).length : 0;
+            
+            for (var clientId in cli ) {
+                 //this is the socket of each client in the room.
+                 var clientSocket = io.sockets.connected[clientId];
+                 
+                 if (!isLogged({id: clientSocket.user.id})) {
+                    adminUsers.push(clientSocket.user);
+                    adminIdUsers[user.admin_id] = _.where(adminUsers, {admin_id: user.admin_id});
+                    
+                 }
+
+                 //you can do whatever you need with this
+                  io.sockets.in(user.admin_id).emit('user-online', {
+                        user:  adminIdUsers[user.admin_id], 
+                        number: numClients
+                   });
+
+            }
+
         });
     });
 
@@ -104,7 +133,7 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
     //PRIVATE MESSAGE
     socket.on("pm", function (data) {
         clients[data.id].emit("message", {
-            message: users[data.id].email + " " +data.message
+            message: clients[data.id].user.email + " " +data.message
         });
         
         //SAVE MESSAGE TO THE DATABASE

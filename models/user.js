@@ -19,6 +19,9 @@ module.exports = function(sequelize, DataTypes) {
         password_hash:{
         	type: DataTypes.STRING
         },
+        admin_id:{
+            type: DataTypes.INTEGER
+        },
         password: {
         	type: DataTypes.VIRTUAL,
         	allowNull: false,
@@ -42,7 +45,7 @@ module.exports = function(sequelize, DataTypes) {
         	instanceMethods: {
         		toPublicJSON: function() {
         		var user = this.toJSON();
-        		var returnDetails = _.pick(user,"id","email","createdAt", "updatedAt");
+        		var returnDetails = _.pick(user,"id","email","createdAt", "updatedAt","admin_id");
 
         		return returnDetails;
         		},

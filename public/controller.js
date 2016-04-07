@@ -8,6 +8,7 @@ function ChatData($scope,$http, $routeParams)
     var vm = this;
     vm.sub = sub;
     vm.messages =[];
+    vm.users = [];
     
 
     var socket = io.connect();
@@ -24,12 +25,17 @@ function ChatData($scope,$http, $routeParams)
 
     });
     
+
+    socket.on("user-online", function(data) {
+      vm.users = data.user;
+      $scope.$apply(vm.users);
+      
+    });
    
    
 
     socket.on("message", function (message) {
-
-         vm.messages.push(message);
+        vm.messages.push(message);
          $scope.$apply(vm.messages);
 
     });
