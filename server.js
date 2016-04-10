@@ -82,7 +82,11 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
     res.send(user.toPublicJSON());
 });
 
- io.on('connection', function (socket) {
+
+
+io.on('connection', function (socket) {
+
+    
 
      socket.on("login", function (data) {
         // SAVE USER ID
@@ -95,7 +99,7 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
             clients[user.id].user = user.toPublicJSON();
             clients[user.id].join(user.admin_id);
 
-            
+            //GET ALL SOCKETS IN ROOM
             var cli = io.sockets.adapter.rooms[user.admin_id].sockets;  
 
 
@@ -104,7 +108,7 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
             } 
 
             //to get the number of clients
-            var numClients = (typeof cli !== 'undefined') ? Object.keys(clients).length : 0;
+            var numClients = (typeof cli !== 'undefined') ? Object.keys(cli).length : 0;
             
             for (var clientId in cli ) {
                  //this is the socket of each client in the room.
@@ -157,7 +161,19 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
 
 
 
-
+    socket.on('disconnect', function () {
+        if(socket.user !== undefined) {
+            setTimeout(function () {
+            adminUsers = _.without(adminUsers, _.findWhere(adminUsers, {id: socket.user.id}));
+            adminIdUsers[socket.user.admin_id] = _.without(adminIdUsers[socket.user.admin_id], _.findWhere(adminIdUsers[socket.user.admin_id], {id: socket.user.id}));
+            socket.leave(socket.user.admin_id);
+            delete clients[socket.user.id];
+         }, 2000);
+            
+        }
+        
+        
+    });
 
     //PROJECTS CHAT ROOMS
 //    socket.join("1Projekt");
@@ -166,6 +182,7 @@ app.get("/user/get" ,middleware.requireAuth,function(req,res) {
 //    });
 
 });
+
 
 
 db.sequelize.sync({force:false})

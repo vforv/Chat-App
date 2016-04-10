@@ -14,7 +14,6 @@ function ChatData($scope,$http, $routeParams)
     var socket = io.connect();
 
     var i = 0;
-
     
      $http.get("/user/get/?Auth=" + $routeParams.token)
       .then(function(user){
