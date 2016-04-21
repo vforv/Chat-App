@@ -31,7 +31,18 @@ function ChatData($scope,$http, $routeParams)
       
     });
    
-   
+    socket.on("user-offline", function(data) {
+      if(data.user.id !== undefined) {
+
+        var index = vm.users.map(function(el) {
+        return el.id;
+        }).indexOf(data.user.id);
+
+        vm.users.splice(index, 1); 
+        $scope.$apply(vm.users); 
+      }
+      
+    });
 
     socket.on("message", function (message) {
         vm.messages.push(message);

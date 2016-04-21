@@ -102,7 +102,7 @@ io.on('connection', function (socket) {
             //GET ALL SOCKETS IN ROOM
             var cli = io.sockets.adapter.rooms[user.admin_id].sockets;  
 
-
+            //CHECK IF USER ALREADYLOGED
             function isLogged(idObj) {
                 return (_.findWhere(adminUsers, idObj) == null) ? false : true;
             } 
@@ -120,7 +120,7 @@ io.on('connection', function (socket) {
                     
                  }
 
-                 //you can do whatever you need with this
+                 //ONLINE USERS
                   io.sockets.in(user.admin_id).emit('user-online', {
                         user:  adminIdUsers[user.admin_id], 
                         number: numClients
@@ -164,11 +164,21 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function () {
         if(socket.user !== undefined) {
             setTimeout(function () {
+
+            
+
             adminUsers = _.without(adminUsers, _.findWhere(adminUsers, {id: socket.user.id}));
             adminIdUsers[socket.user.admin_id] = _.without(adminIdUsers[socket.user.admin_id], _.findWhere(adminIdUsers[socket.user.admin_id], {id: socket.user.id}));
             socket.leave(socket.user.admin_id);
             delete clients[socket.user.id];
-         }, 2000);
+
+            
+
+         }, 3000);
+
+        socket.in(socket.user.admin_id).emit('user-offline', {
+            user: socket.user
+         });
             
         }
         
